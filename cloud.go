@@ -15,7 +15,7 @@
 //   func main() {
 //   	a := app.New()
 //   	a.SetCloudProvider(aws.NewProvider()) // if aws provider existed ;)
-//   	w := a.NewWindow("Hello")
+//   	w := a.NewWindow("Cloud")
 //
 //   	w.SetContent(widget.NewLabel("Add content here"))
 //   	w.ShowAndRun()
@@ -34,7 +34,7 @@
 //   func main() {
 //   	a := app.New()
 //   	cloud.Enable(a)
-//   	w := a.NewWindow("Hello")
+//   	w := a.NewWindow("Cloud")
 //
 //   	w.SetContent(widget.NewButton("Choose cloud provider", func() {
 //   		cloud.ShowSettings(a, w)
@@ -48,15 +48,20 @@ import "fyne.io/fyne/v2"
 var providers []fyne.CloudProvider
 
 func Enable(a fyne.App) {
-	a.SetCloudProvider(lookupConfiguredProvider(a))
+	a.SetCloudProvider(lookupConfiguredProvider())
 }
 
 func Register(p fyne.CloudProvider) {
 	providers = append(providers, p)
 }
 
-func lookupConfiguredProvider(_ fyne.App) fyne.CloudProvider {
-	// TODO find which provider was chosen (using some preferences store)
-	// then create an instance of it and return
+func lookupConfiguredProvider() fyne.CloudProvider {
+	name := currentProviderName()
+
+	for _, p := range providers {
+		if p.ProviderName() == name {
+			return p
+		}
+	}
 	return nil
 }
