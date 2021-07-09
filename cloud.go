@@ -43,7 +43,10 @@
 //   }
 package cloud // import "fyne.io/cloud"
 
-import "fyne.io/fyne/v2"
+import (
+	"fyne.io/cloud/provider/dropbox"
+	"fyne.io/fyne/v2"
+)
 
 var providers []fyne.CloudProvider
 
@@ -53,6 +56,10 @@ func Enable(a fyne.App) {
 
 func Register(p fyne.CloudProvider) {
 	providers = append(providers, p)
+}
+
+func init() {
+	Register(dropbox.NewProvider())
 }
 
 func lookupConfiguredProvider() fyne.CloudProvider {
