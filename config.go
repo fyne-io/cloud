@@ -24,7 +24,7 @@ func decodeSettings() *app.SettingsSchema {
 		if !os.IsNotExist(err) {
 			fyne.LogError("Unable to read global settings", err)
 		}
-		return nil
+		return store
 	}
 	decode := json.NewDecoder(file)
 

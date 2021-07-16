@@ -3,12 +3,11 @@ package internal
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/storage"
 )
 
 type preferences struct {
@@ -17,8 +16,8 @@ type preferences struct {
 	prefLock     sync.RWMutex
 	ignoreChange bool
 
-	app     fyne.App
-	rootDir string
+	app  fyne.App
+	file fyne.URI
 }
 
 // Declare conformity with Preferences interface
@@ -34,70 +33,59 @@ func (p *preferences) resetIgnore() {
 }
 
 func (p *preferences) save() error {
-	return p.saveToFile(p.storagePath())
+	return p.saveToFile(p.file)
 }
 
-func (p *preferences) saveToFile(path string) error {
+func (p *preferences) saveToFile(file fyne.URI) error {
 	p.prefLock.Lock()
 	p.ignoreChange = true
 	p.prefLock.Unlock()
 	defer p.resetIgnore()
-	err := os.MkdirAll(filepath.Dir(path), 0700)
-	if err != nil { // this is not an exists error according to docs
+	dir, _ := storage.Parent(file)
+	_ = storage.CreateListable(dir)
+
+	write, err := storage.Writer(file)
+	if err != nil {
 		return err
 	}
-
-	file, err := os.Create(path)
-	if err != nil {
-		if !os.IsExist(err) {
-			return err
-		}
-		file, err = os.Open(path) // #nosec
-		if err != nil {
-			return err
-		}
-	}
-	encode := json.NewEncoder(file)
+	encode := json.NewEncoder(write)
 
 	p.InMemoryPreferences.ReadValues(func(values map[string]interface{}) {
 		err = encode.Encode(&values)
 	})
+
+	write.Close()
 	return err
 }
 
 func (p *preferences) load() {
-	err := p.loadFromFile(p.storagePath())
+	err := p.loadFromFile(p.file)
 	if err != nil {
 		fyne.LogError("Preferences load error:", err)
 	}
 }
 
-func (p *preferences) loadFromFile(path string) (err error) {
-	file, err := os.Open(path) // #nosec
+func (p *preferences) loadFromFile(path fyne.URI) (err error) {
+	read, err := storage.Reader(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-				return err
-			}
-			return nil
-		}
 		return err
 	}
 	defer func() {
-		if r := file.Close(); r != nil && err == nil {
+		if r := read.Close(); r != nil && err == nil {
 			err = r
 		}
 	}()
-	decode := json.NewDecoder(file)
+	decode := json.NewDecoder(read)
 
 	p.InMemoryPreferences.WriteValues(func(values map[string]interface{}) {
 		err = decode.Decode(&values)
 	})
+
 	return err
 }
 
-func NewPreferences(a fyne.App, root string) *preferences {
-	p := &preferences{app: a, rootDir: root}
+func NewPreferences(a fyne.App, file fyne.URI) *preferences {
+	p := &preferences{app: a, file: file}
 	p.InMemoryPreferences = NewInMemoryPreferences()
 
 	// don't load or watch if not setup

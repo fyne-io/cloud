@@ -3,15 +3,8 @@
 
 package internal
 
-import "path/filepath"
-
-// storagePath returns the location of the settings storage
-func (p *preferences) storagePath() string {
-	return filepath.Join(p.rootDir, p.app.UniqueID(), "preferences.json")
-}
-
 func (p *preferences) watch() {
-	watchFile(p.storagePath(), func() {
+	watchFile(p.file.Path(), func() {
 		p.prefLock.RLock()
 		shouldIgnoreChange := p.ignoreChange
 		p.prefLock.RUnlock()

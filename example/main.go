@@ -23,13 +23,15 @@ func main() {
 	testEntry := widget.NewEntryWithData(binding.BindPreferenceString("test", a.Preferences()))
 
 	updateCloud := func () {
+		if a.CloudProvider() == nil {
+			return
+		}
+
 		current.SetText(fmt.Sprintf("Using %s provider", a.CloudProvider().ProviderName()))
 		choose.SetText("Change provider")
 		testEntry.Bind(binding.BindPreferenceString("test", a.Preferences()))
 	}
-	if a.CloudProvider() != nil {
-		updateCloud()
-	}
+	updateCloud()
 
 	ch := make(chan fyne.Settings)
 	a.Settings().AddChangeListener(ch)
