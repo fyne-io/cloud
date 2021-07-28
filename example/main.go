@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -17,18 +18,17 @@ func main() {
 	w := a.NewWindow("Cloud")
 
 	current := widget.NewLabel("No configured provider")
-	choose := widget.NewButton("Choose cloud provider", func() {
+	choose := widget.NewButton("Cloud settings", func() {
 		cloud.ShowSettings(a, w)
 	})
 	testEntry := widget.NewEntryWithData(binding.BindPreferenceString("test", a.Preferences()))
 
-	updateCloud := func () {
+	updateCloud := func() {
 		if a.CloudProvider() == nil {
 			return
 		}
 
-		current.SetText(fmt.Sprintf("Using %s provider", a.CloudProvider().ProviderName()))
-		choose.SetText("Change provider")
+		current.SetText(fmt.Sprint("Current cloud: ", a.CloudProvider().ProviderName()))
 		testEntry.Bind(binding.BindPreferenceString("test", a.Preferences()))
 	}
 	updateCloud()
@@ -41,7 +41,8 @@ func main() {
 		}
 	}()
 
-	w.SetContent(container.NewVBox(current, choose,
-		container.NewBorder(nil, nil, widget.NewLabel("Test store value"), nil, testEntry)))
+	w.SetContent(container.NewVBox(layout.NewSpacer(), current,
+		container.NewBorder(nil, nil, widget.NewLabel("Test store value"), nil, testEntry),
+		layout.NewSpacer(), choose))
 	w.ShowAndRun()
 }
