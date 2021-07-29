@@ -4,6 +4,9 @@ package dropbox
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -12,7 +15,30 @@ import (
 )
 
 type dropbox struct {
-	store fyne.URI
+	store  fyne.URI
+	config string
+	prefs  fyne.Preferences
+}
+
+func (d *dropbox) SetConfig(str string) {
+	d.config = str
+}
+
+func (d *dropbox) Configure(w fyne.Window) (data string, err error) {
+	if fyne.CurrentDevice().IsMobile() {
+		data, err = d.mobileConfig(fyne.CurrentApp())
+	} else {
+		data, err = d.desktopConfig(w)
+	}
+
+	if err == nil {
+		d.config = data
+	}
+	return data, err
+}
+
+func (d *dropbox) Disconnect() {
+	d.prefs.(interface{Disconnect()}).Disconnect()
 }
 
 func (d *dropbox) ProviderDescription() string {
@@ -32,14 +58,64 @@ func (d *dropbox) Setup(a fyne.App) error {
 	if !fyne.CurrentDevice().IsMobile() {
 		return nil
 	}
+	if d.config != "" {
+		// TODO validate
+		return nil
+	}
+	_, err := d.mobileConfig(a)
+	return err
+}
 
+func (d *dropbox) desktopConfig(w fyne.Window) (string, error) {
 	err := make(chan error)
+	data := ""
+
+	ask := dialog.NewConfirm("Set Dropbox location",
+		"On the next screen please choose the the fynesync\nfolder, or whichever you would prefer",
+		func(ok bool) {
+			if !ok {
+				err <- errors.New("user cancelled setup")
+				return
+			}
+
+			dialog.ShowFolderOpen(func(list fyne.ListableURI, e2 error) {
+				if e2 != nil {
+					err <- e2
+					return
+				}
+
+				if list == nil {
+					err <- errors.New("no folder was chosen")
+					return
+				}
+
+				// TODO check content?...
+				rootDir := list.Path()
+				home, _ := os.UserHomeDir()
+				if len(rootDir) > len(home) && strings.Index(rootDir, home) == 0 {
+					rootDir = "~"+rootDir[len(home):]
+				}
+
+				data = rootDir
+				err <- nil
+			}, w)
+		}, w)
+
+	ask.SetConfirmText("OK")
+	ask.SetDismissText("Cancel")
+	ask.Show()
+	return data, <- err
+}
+
+func (d *dropbox) mobileConfig(a fyne.App) (string, error) {
+	err := make(chan error)
+	data := ""
 	for len(fyne.CurrentApp().Driver().AllWindows()) == 0 {
 		time.Sleep(time.Millisecond*100)
 	}
 	win := fyne.CurrentApp().Driver().AllWindows()[0]
 
-	ask := dialog.NewConfirm("Locate dropbox",
+	ask := dialog.NewConfirm("Locate Dropbox files",
 		"On the next screen please load the Dropbox file\nfynesync/"+a.UniqueID()+"/preferences.json",
 		func(ok bool) {
 			if !ok {
@@ -60,6 +136,8 @@ func (d *dropbox) Setup(a fyne.App) error {
 
 				// TODO check content?...
 				d.store = read.URI()
+				appDir := filepath.Dir(d.store.Path())
+				data = filepath.Dir(appDir)
 				err <- nil
 			}, win)
 		}, win)
@@ -67,7 +145,7 @@ func (d *dropbox) Setup(a fyne.App) error {
 	ask.SetConfirmText("OK")
 	ask.SetDismissText("Cancel")
 	ask.Show()
-	return <- err
+	return data, <- err
 }
 
 func NewProvider() fyne.CloudProvider {

@@ -10,12 +10,31 @@ import (
 )
 
 func ShowSettings(a fyne.App, w fyne.Window) {
-	var d dialog.Dialog
-	if a.CloudProvider() == nil {
+	prov := a.CloudProvider()
+	if prov == nil {
 		showChoice(a, w)
 	}
 
-	current := widget.NewLabel(fmt.Sprintf("Using %s provider", a.CloudProvider().ProviderName()))
+	config := widget.NewButton("Configure", func() {
+		go func() {
+			str, err := prov.(Configurable).Configure(w)
+			if err != nil {
+				dialog.ShowError(err, w)
+			} else {
+				if dis, ok := a.CloudProvider().(Disconnectable); ok {
+					dis.Disconnect()
+				}
+
+				setProviderConfig(str)
+				prov.(Configurable).SetConfig(str)
+				a.SetCloudProvider(prov) // we don't use setCloud here as we have a new config
+			}
+		}()
+	})
+	if _, ok := prov.(Configurable); !ok {
+		config.Hide()
+	}
+	current := widget.NewLabel(fmt.Sprintf("Using %s provider", prov.ProviderName()))
 	ch := make(chan fyne.Settings)
 	a.Settings().AddChangeListener(ch)
 	go func() {
@@ -23,7 +42,10 @@ func ShowSettings(a fyne.App, w fyne.Window) {
 			current.SetText(fmt.Sprintf("Using %s provider", a.CloudProvider().ProviderName()))
 		}
 	}()
-	d = dialog.NewCustomConfirm("Cloud configuration", "Change Provider", "Cancel", current,
+
+	var d dialog.Dialog
+	d = dialog.NewCustomConfirm("Cloud configuration", "Change Provider", "Cancel",
+		container.NewBorder(nil, nil, nil, config, current),
 		func(change bool) {
 			if !change {
 				return
@@ -67,5 +89,5 @@ func showChoice(a fyne.App, w fyne.Window) {
 
 func chooseProvider(a fyne.App, p fyne.CloudProvider) {
 	setCurrentProviderName(p.ProviderName())
-	a.SetCloudProvider(p)
+	setCloud(p, a)
 }

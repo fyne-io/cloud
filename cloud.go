@@ -48,10 +48,17 @@ import (
 	"fyne.io/fyne/v2"
 )
 
+// Disconnectable interface describes a cloud provider that can respond to being disconnected.
+// This is typically used before a replacement provider is loaded.
+type Disconnectable interface {
+	// Disconnect the cloud provider from application and ignore future events.
+	Disconnect()
+}
+
 var providers []fyne.CloudProvider
 
 func Enable(a fyne.App) {
-	a.SetCloudProvider(lookupConfiguredProvider())
+	setCloud(lookupConfiguredProvider(), a)
 }
 
 func Register(p fyne.CloudProvider) {
@@ -71,4 +78,16 @@ func lookupConfiguredProvider() fyne.CloudProvider {
 		}
 	}
 	return nil
+}
+
+func setCloud(p fyne.CloudProvider, a fyne.App) {
+	if dis, ok := a.CloudProvider().(Disconnectable); ok {
+		dis.Disconnect()
+	}
+	if config, ok := p.(Configurable); ok {
+		schema := decodeSettings()
+		config.SetConfig(schema.CloudConfig)
+	}
+
+	a.SetCloudProvider(p)
 }

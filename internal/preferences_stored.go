@@ -13,8 +13,8 @@ import (
 type preferences struct {
 	*InMemoryPreferences
 
-	prefLock     sync.RWMutex
-	ignoreChange bool
+	prefLock                   sync.RWMutex
+	disconnected, ignoreChange bool
 
 	app  fyne.App
 	file fyne.URI
@@ -22,6 +22,12 @@ type preferences struct {
 
 // Declare conformity with Preferences interface
 var _ fyne.Preferences = (*preferences)(nil)
+
+func (p *preferences) Disconnect() {
+	p.prefLock.Lock()
+	p.disconnected = true
+	p.prefLock.Unlock()
+}
 
 func (p *preferences) resetIgnore() {
 	go func() {
@@ -96,7 +102,7 @@ func NewPreferences(a fyne.App, file fyne.URI) *preferences {
 
 	p.AddChangeListener(func() {
 		p.prefLock.RLock()
-		shouldIgnoreChange := p.ignoreChange
+		shouldIgnoreChange := p.ignoreChange || p.disconnected
 		p.prefLock.RUnlock()
 		if shouldIgnoreChange { // callback after loading, no need to save
 			return

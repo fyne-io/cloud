@@ -8,6 +8,15 @@ import (
 	"fyne.io/fyne/v2/app"
 )
 
+// Configurable interface describes the functions required for a cloud provider to store configuration.
+type Configurable interface {
+	// Configure requests that the cloud provider show some configuration options as a dialog on the current window.
+	// It returns a serialised configuration or an error.
+	Configure(fyne.Window) (string, error)
+	// SetConfig is used to apply a previous configuration to this provider.
+	SetConfig(string)
+}
+
 func currentProviderName() string {
 	store := decodeSettings()
 	if store == nil {
@@ -38,10 +47,7 @@ func decodeSettings() *app.SettingsSchema {
 	return store
 }
 
-func setCurrentProviderName(s string) {
-	store := decodeSettings()
-	store.CloudName = s
-
+func saveSettings(store *app.SettingsSchema) {
 	file, err := os.Create(store.StoragePath()) // #nosec
 	if err != nil {
 		fyne.LogError("Failed to create global settings file", err)
@@ -53,4 +59,18 @@ func setCurrentProviderName(s string) {
 	if err != nil {
 		fyne.LogError("Failed to encode global settings", err)
 	}
+}
+
+func setCurrentProviderName(s string) {
+	store := decodeSettings()
+	store.CloudName = s
+
+	saveSettings(store)
+}
+
+func setProviderConfig(s string) {
+	store := decodeSettings()
+	store.CloudConfig = s
+
+	saveSettings(store)
 }
