@@ -9,10 +9,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const (
-	usingCloudFormat = "Using %s cloud provider"
-)
-
 func ShowSettings(a fyne.App, w fyne.Window) {
 	prov := a.CloudProvider()
 	if prov == nil {
@@ -38,12 +34,12 @@ func ShowSettings(a fyne.App, w fyne.Window) {
 	if _, ok := prov.(Configurable); !ok {
 		config.Hide()
 	}
-	current := widget.NewLabel(fmt.Sprintf(usingCloudFormat, prov.ProviderName()))
+	current := widget.NewLabel(cloudText(prov))
 	ch := make(chan fyne.Settings)
 	a.Settings().AddChangeListener(ch)
 	go func() {
 		for range ch {
-			current.SetText(fmt.Sprintf(usingCloudFormat, prov.ProviderName()))
+			current.SetText(cloudText(prov))
 		}
 	}()
 
@@ -94,4 +90,12 @@ func showChoice(a fyne.App, w fyne.Window) {
 func chooseProvider(a fyne.App, p fyne.CloudProvider) {
 	setCurrentProviderName(p.ProviderName())
 	setCloud(p, a)
+}
+
+func cloudText(p fyne.CloudProvider) string {
+	if p == nil {
+		return "No Cloud configured"
+	}
+
+	return fmt.Sprintf("Using %s cloud provider", p.ProviderName())
 }
