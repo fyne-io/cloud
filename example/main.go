@@ -22,6 +22,7 @@ func main() {
 		cloud.ShowSettings(a, w)
 	})
 	testEntry := widget.NewEntryWithData(binding.BindPreferenceString("test", a.Preferences()))
+	testEntry.Validator = nil
 
 	updateCloud := func() {
 		if a.CloudProvider() == nil {
