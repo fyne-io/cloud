@@ -44,6 +44,7 @@
 package cloud // import "fyne.io/cloud"
 
 import (
+	"fyne.io/cloud/internal/settings"
 	"fyne.io/cloud/provider/dropbox"
 	"fyne.io/fyne/v2"
 )
@@ -85,7 +86,7 @@ func setCloud(p fyne.CloudProvider, a fyne.App) {
 		dis.Disconnect()
 	}
 	if config, ok := p.(Configurable); ok {
-		schema := decodeSettings()
+		schema := settings.Load()
 		config.SetConfig(schema.CloudConfig)
 	}
 

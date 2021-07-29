@@ -14,7 +14,6 @@ func (d *dropbox) CloudPreferences(a fyne.App) fyne.Preferences {
 	if d.store != nil {
 		p = internal.NewPreferences(a, d.store)
 	} else {
-
 		filePath := filepath.Join(d.dropboxLocation(), a.UniqueID(), "preferences.json")
 		p = internal.NewPreferences(a, storage.NewFileURI(filePath))
 	}

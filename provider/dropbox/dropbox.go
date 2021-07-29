@@ -5,12 +5,13 @@ package dropbox
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
+	"fyne.io/cloud/internal/settings"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 )
 
@@ -59,10 +60,13 @@ func (d *dropbox) Setup(a fyne.App) error {
 		return nil
 	}
 	if d.config != "" {
+		d.store = storage.NewFileURI(d.config)
 		// TODO validate
 		return nil
 	}
-	_, err := d.mobileConfig(a)
+	data, err := d.mobileConfig(a)
+	settings.SetProviderConfig(data)
+
 	return err
 }
 
@@ -136,8 +140,7 @@ func (d *dropbox) mobileConfig(a fyne.App) (string, error) {
 
 				// TODO check content?...
 				d.store = read.URI()
-				appDir := filepath.Dir(d.store.Path())
-				data = filepath.Dir(appDir)
+				data = d.store.Path()
 				err <- nil
 			}, win)
 		}, win)

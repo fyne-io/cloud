@@ -3,6 +3,7 @@ package cloud
 import (
 	"fmt"
 
+	"fyne.io/cloud/internal/settings"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -26,7 +27,7 @@ func ShowSettings(a fyne.App, w fyne.Window) {
 					dis.Disconnect()
 				}
 
-				setProviderConfig(str)
+				settings.SetProviderConfig(str)
 				prov.(Configurable).SetConfig(str)
 				a.SetCloudProvider(prov) // we don't use setCloud here as we have a new config
 			}
@@ -89,7 +90,7 @@ func showChoice(a fyne.App, w fyne.Window) {
 }
 
 func chooseProvider(a fyne.App, p fyne.CloudProvider) {
-	setCurrentProviderName(p.ProviderName())
+	settings.SetCurrentProviderName(p.ProviderName())
 	setCloud(p, a)
 }
 
