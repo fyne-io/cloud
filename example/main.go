@@ -24,21 +24,14 @@ func main() {
 	testEntry := widget.NewEntryWithData(binding.BindPreferenceString("test", a.Preferences()))
 	testEntry.Validator = nil
 
-	updateCloud := func() {
-		if a.CloudProvider() == nil {
-			return
-		}
-
-		current.SetText(fmt.Sprint("Current cloud: ", a.CloudProvider().ProviderName()))
-		testEntry.Bind(binding.BindPreferenceString("test", a.Preferences()))
-	}
-	updateCloud()
-
 	ch := make(chan fyne.Settings)
 	a.Settings().AddChangeListener(ch)
 	go func() {
 		for range ch {
-			updateCloud()
+			if a.CloudProvider() == nil {
+				return
+			}
+			current.SetText(fmt.Sprint("Current cloud: ", a.CloudProvider().ProviderName()))
 		}
 	}()
 

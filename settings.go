@@ -13,6 +13,7 @@ func ShowSettings(a fyne.App, w fyne.Window) {
 	prov := a.CloudProvider()
 	if prov == nil {
 		showChoice(a, w)
+		return
 	}
 
 	config := widget.NewButton("Configure", func() {
