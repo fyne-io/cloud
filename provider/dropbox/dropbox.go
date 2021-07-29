@@ -38,7 +38,7 @@ func (d *dropbox) Configure(w fyne.Window) (data string, err error) {
 }
 
 func (d *dropbox) Disconnect() {
-	d.prefs.(interface{Disconnect()}).Disconnect()
+	d.prefs.(interface{ Disconnect() }).Disconnect()
 }
 
 func (d *dropbox) ProviderDescription() string {
@@ -93,7 +93,7 @@ func (d *dropbox) desktopConfig(w fyne.Window) (string, error) {
 				rootDir := list.Path()
 				home, _ := os.UserHomeDir()
 				if len(rootDir) > len(home) && strings.Index(rootDir, home) == 0 {
-					rootDir = "~"+rootDir[len(home):]
+					rootDir = "~" + rootDir[len(home):]
 				}
 
 				data = rootDir
@@ -104,14 +104,14 @@ func (d *dropbox) desktopConfig(w fyne.Window) (string, error) {
 	ask.SetConfirmText("OK")
 	ask.SetDismissText("Cancel")
 	ask.Show()
-	return data, <- err
+	return data, <-err
 }
 
 func (d *dropbox) mobileConfig(a fyne.App) (string, error) {
 	err := make(chan error)
 	data := ""
 	for len(fyne.CurrentApp().Driver().AllWindows()) == 0 {
-		time.Sleep(time.Millisecond*100)
+		time.Sleep(time.Millisecond * 100)
 	}
 	win := fyne.CurrentApp().Driver().AllWindows()[0]
 
@@ -145,10 +145,9 @@ func (d *dropbox) mobileConfig(a fyne.App) (string, error) {
 	ask.SetConfirmText("OK")
 	ask.SetDismissText("Cancel")
 	ask.Show()
-	return data, <- err
+	return data, <-err
 }
 
 func NewProvider() fyne.CloudProvider {
 	return &dropbox{}
 }
-
