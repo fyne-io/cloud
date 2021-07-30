@@ -48,7 +48,9 @@ func (p *preferences) saveToFile(file fyne.URI) error {
 	p.prefLock.Unlock()
 	defer p.resetIgnore()
 	dir, _ := storage.Parent(file)
-	_ = storage.CreateListable(dir)
+	if dir != nil { // may not be supported / needed if the file exists
+		_ = storage.CreateListable(dir)
+	}
 
 	write, err := storage.Writer(file)
 	if err != nil {
