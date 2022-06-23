@@ -25,9 +25,9 @@ func (d *dropbox) SetConfig(str string) {
 	d.config = str
 }
 
-func (d *dropbox) Configure(w fyne.Window) (data string, err error) {
+func (d *dropbox) Configure(a fyne.App, w fyne.Window) (data string, err error) {
 	if fyne.CurrentDevice().IsMobile() {
-		data, err = d.mobileConfig(fyne.CurrentApp())
+		data, err = d.mobileConfig(a)
 	} else {
 		data, err = d.desktopConfig(w)
 	}
@@ -114,10 +114,10 @@ func (d *dropbox) desktopConfig(w fyne.Window) (string, error) {
 func (d *dropbox) mobileConfig(a fyne.App) (string, error) {
 	err := make(chan error)
 	data := ""
-	for len(fyne.CurrentApp().Driver().AllWindows()) == 0 {
+	for len(a.Driver().AllWindows()) == 0 {
 		time.Sleep(time.Millisecond * 100)
 	}
-	win := fyne.CurrentApp().Driver().AllWindows()[0]
+	win := a.Driver().AllWindows()[0]
 
 	ask := dialog.NewConfirm("Locate Dropbox files",
 		"On the next screen please load the Dropbox file\nfynesync/"+a.UniqueID()+"/preferences.json",

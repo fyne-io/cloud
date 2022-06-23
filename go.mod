@@ -1,9 +1,9 @@
 module fyne.io/cloud
 
-go 1.16
+go 1.14
 
 require (
-	fyne.io/fyne/v2 v2.0.3-rc2.0.20210729160138-185fd1329686
-	github.com/fsnotify/fsnotify v1.4.9
-	github.com/stretchr/testify v1.5.1
+	fyne.io/fyne/v2 v2.2.1-0.20220623210436-5874a2e7c869
+	github.com/fsnotify/fsnotify v1.5.4
+	github.com/stretchr/testify v1.7.2
 )

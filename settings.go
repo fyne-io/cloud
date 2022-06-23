@@ -19,7 +19,7 @@ func ShowSettings(a fyne.App, w fyne.Window) {
 
 	config := widget.NewButton("Configure", func() {
 		go func() {
-			str, err := prov.(Configurable).Configure(w)
+			str, err := prov.(Configurable).Configure(a, w)
 			if err != nil {
 				dialog.ShowError(err, w)
 			} else {

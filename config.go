@@ -7,9 +7,9 @@ import (
 
 // Configurable interface describes the functions required for a cloud provider to store configuration.
 type Configurable interface {
-	// Configure requests that the cloud provider show some configuration options as a dialog on the current window.
+	// Configure requests that the cloud provider show some configuration options as a dialog on the specified window.
 	// It returns a serialised configuration or an error.
-	Configure(fyne.Window) (string, error)
+	Configure(fyne.App, fyne.Window) (string, error)
 	// SetConfig is used to apply a previous configuration to this provider.
 	SetConfig(string)
 }

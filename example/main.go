@@ -14,18 +14,19 @@ import (
 
 func main() {
 	a := app.NewWithID("io.fyne.cloud.example")
-	cloud.Enable(a)
 	w := a.NewWindow("Cloud")
 
 	current := widget.NewLabel("No configured provider")
+	ch := make(chan fyne.Settings)
+	a.Settings().AddChangeListener(ch)
+	cloud.Enable(a)
+
 	choose := widget.NewButton("Cloud settings", func() {
 		cloud.ShowSettings(a, w)
 	})
 	testEntry := widget.NewEntryWithData(binding.BindPreferenceString("test", a.Preferences()))
 	testEntry.Validator = nil
 
-	ch := make(chan fyne.Settings)
-	a.Settings().AddChangeListener(ch)
 	go func() {
 		for range ch {
 			if a.CloudProvider() == nil {
