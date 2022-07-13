@@ -1,9 +1,13 @@
 package lalStore
 
 import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"sync"
 
 	"fyne.io/fyne/v2"
+	"github.com/fynelabs/lal"
 )
 
 type lalPreferences struct {
@@ -11,6 +15,8 @@ type lalPreferences struct {
 	lock            sync.RWMutex
 	changeListeners []func()
 	wg              *sync.WaitGroup
+
+	db *lal.DB
 }
 
 // enforce conformity
@@ -51,6 +57,39 @@ func (p *lalPreferences) WriteValues(fn func(map[string]interface{})) {
 
 func (p *lalPreferences) set(key string, value interface{}) {
 	p.lock.Lock()
+
+	// fmt.Println("setting")
+	if p.db == nil {
+		fmt.Println("nil db")
+	}
+
+	//Update(CreateIfNotExistBucket+Gob.Encode+Put) for each Settter and View(Bucket+Get+Gob.Decode)
+	if err := p.db.Update(func(tx *lal.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("widgets"))
+		if err != nil {
+			fyne.LogError("Can't create bucket", err)
+		}
+		var keyBuffer bytes.Buffer
+		keyEnc := gob.NewEncoder(&keyBuffer)
+		err = keyEnc.Encode(key)
+		if err != nil {
+			fyne.LogError("Can't encode key to bytes buffer", err)
+		}
+
+		var valueBuffer bytes.Buffer
+		valEnc := gob.NewEncoder(&valueBuffer)
+		err = valEnc.Encode(value)
+		if err != nil {
+			fyne.LogError("Can't encode value to bytes buffer", err)
+		}
+
+		if err := b.Put(keyBuffer.Bytes(), valueBuffer.Bytes()); err != nil {
+			fyne.LogError("Can't Put", err)
+		}
+		return nil
+	}); err != nil {
+		fyne.LogError("Can't update bucket", err)
+	}
 
 	p.values[key] = value
 	p.lock.Unlock()
