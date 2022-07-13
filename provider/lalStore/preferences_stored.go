@@ -8,6 +8,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
+	"github.com/fynelabs/lal"
 )
 
 type preferences struct {
@@ -92,7 +93,7 @@ func (p *preferences) loadFromFile(path fyne.URI) (err error) {
 	return err
 }
 
-func NewPreferences(a fyne.App, file fyne.URI) *preferences {
+func NewPreferences(a fyne.App, file fyne.URI, db *lal.DB) *preferences {
 	p := &preferences{app: a, file: file}
 	p.lalPreferences = NewLalPreferences()
 
