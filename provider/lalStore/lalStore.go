@@ -42,7 +42,7 @@ func (d *lalStore) Configure(a fyne.App, w fyne.Window) (data string, err error)
 }
 
 func (d *lalStore) ProviderDescription() string {
-	return "KV Store description...\n"
+	return "Lal Store description...\n"
 }
 
 func (d *lalStore) ProviderIcon() fyne.Resource {
@@ -50,7 +50,7 @@ func (d *lalStore) ProviderIcon() fyne.Resource {
 }
 
 func (d *lalStore) ProviderName() string {
-	return "KV Store"
+	return "Lal Store"
 }
 
 func (d *lalStore) Setup(a fyne.App) error {
@@ -58,7 +58,6 @@ func (d *lalStore) Setup(a fyne.App) error {
 	if err != nil {
 		fyne.LogError("Can't setup prefs", err)
 	}
-
 	d.db, _ = lal.Open(dbURI.String(), 0666, lal.DefaultOptions)
 
 	if !fyne.CurrentDevice().IsMobile() {
@@ -71,8 +70,6 @@ func (d *lalStore) Setup(a fyne.App) error {
 	}
 	data, err := d.mobileConfig(a)
 	settings.SetProviderConfig(data)
-
-	fmt.Println("setup")
 
 	return err
 }
