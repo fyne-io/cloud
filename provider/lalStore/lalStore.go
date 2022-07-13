@@ -54,11 +54,15 @@ func (d *lalStore) ProviderName() string {
 }
 
 func (d *lalStore) Setup(a fyne.App) error {
-	dbURI, err := storage.Child(a.Storage().RootURI(), "preference.laldb")
+	// dbURI, err := storage.Child(a.Storage().RootURI(), "preference.laldb")
+	// if err != nil {
+	// 	fyne.LogError("Can't setup prefs", err)
+	// }
+	var err error
+	d.db, err = lal.Open(tempfile(), 0666, lal.DefaultOptions)
 	if err != nil {
-		fyne.LogError("Can't setup prefs", err)
+		fyne.LogError("Can't open db", err)
 	}
-	d.db, _ = lal.Open(dbURI.String(), 0666, lal.DefaultOptions)
 
 	if !fyne.CurrentDevice().IsMobile() {
 		return nil

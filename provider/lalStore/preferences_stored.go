@@ -95,7 +95,7 @@ func (p *preferences) loadFromFile(path fyne.URI) (err error) {
 
 func NewPreferences(a fyne.App, file fyne.URI, db *lal.DB) *preferences {
 	p := &preferences{app: a, file: file}
-	p.lalPreferences = NewLalPreferences()
+	p.lalPreferences = NewLalPreferences(db)
 
 	// don't load or watch if not setup
 	if a.UniqueID() == "" {

@@ -229,9 +229,10 @@ func (p *lalPreferences) RemoveValue(key string) {
 }
 
 // NewLalPreferences creates a new preferences implementation
-func NewLalPreferences() *lalPreferences {
+func NewLalPreferences(db *lal.DB) *lalPreferences {
 	return &lalPreferences{
 		values: make(map[string]interface{}),
 		wg:     &sync.WaitGroup{},
+		db:     db,
 	}
 }
