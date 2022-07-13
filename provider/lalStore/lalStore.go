@@ -2,7 +2,6 @@ package lalStore
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -26,8 +25,6 @@ func (d *lalStore) SetConfig(str string) {
 }
 
 func (d *lalStore) Configure(a fyne.App, w fyne.Window) (data string, err error) {
-
-	fmt.Println("configuring kv store")
 
 	if fyne.CurrentDevice().IsMobile() {
 		data, err = d.mobileConfig(a)
@@ -54,12 +51,12 @@ func (d *lalStore) ProviderName() string {
 }
 
 func (d *lalStore) Setup(a fyne.App) error {
-	// dbURI, err := storage.Child(a.Storage().RootURI(), "preference.laldb")
-	// if err != nil {
-	// 	fyne.LogError("Can't setup prefs", err)
-	// }
-	var err error
-	d.db, err = lal.Open(tempfile(), 0666, lal.DefaultOptions)
+	dbURI, err := storage.Child(a.Storage().RootURI(), "preference.laldb")
+	if err != nil {
+		fyne.LogError("Can't setup prefs", err)
+	}
+
+	d.db, err = lal.Open(dbURI.Path(), 0666, lal.DefaultOptions)
 	if err != nil {
 		fyne.LogError("Can't open db", err)
 	}
