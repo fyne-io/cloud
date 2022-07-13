@@ -46,6 +46,7 @@ package cloud // import "fyne.io/cloud"
 import (
 	"fyne.io/cloud/internal/settings"
 	"fyne.io/cloud/provider/dropbox"
+	"fyne.io/cloud/provider/lalStore"
 	"fyne.io/fyne/v2"
 )
 
@@ -68,6 +69,7 @@ func Register(p fyne.CloudProvider) {
 
 func init() {
 	Register(dropbox.NewProvider())
+	Register(lalStore.NewProvider())
 }
 
 func lookupConfiguredProvider() fyne.CloudProvider {
