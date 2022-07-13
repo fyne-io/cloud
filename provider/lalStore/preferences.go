@@ -11,10 +11,10 @@ import (
 func (d *lalStore) CloudPreferences(a fyne.App) fyne.Preferences {
 	var p fyne.Preferences
 	if d.store != nil {
-		p = NewPreferences(a, d.store)
+		p = NewPreferences(a, d.store, d.db)
 	} else {
 		filePath := filepath.Join(d.dbLocation(), a.UniqueID(), "preferences.json")
-		p = NewPreferences(a, storage.NewFileURI(filePath))
+		p = NewPreferences(a, storage.NewFileURI(filePath), d.db)
 	}
 
 	d.prefs = p
