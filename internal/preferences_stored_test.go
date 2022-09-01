@@ -7,18 +7,21 @@ import (
 	"path/filepath"
 	"testing"
 
+	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/test"
 	"github.com/stretchr/testify/assert"
 )
 
-func loadPreferences(id string) *preferences {
-	p := newPreferences(&fyneApp{uniqueID: id})
+func loadPreferences() *preferences {
+	uri := storage.NewFileURI("dummy.json")
+	p := NewPreferences(test.NewApp(), uri)
 	p.load()
 
 	return p
 }
 
 func TestPreferences_Save(t *testing.T) {
-	p := loadPreferences("dummy")
+	p := loadPreferences()
 	p.WriteValues(func(val map[string]interface{}) {
 		val["keyString"] = "value"
 		val["keyInt"] = 4
@@ -28,9 +31,9 @@ func TestPreferences_Save(t *testing.T) {
 
 	path := filepath.Join(os.TempDir(), "fynePrefs.json")
 	defer os.Remove(path)
-	p.saveToFile(path)
+	p.saveToFile(storage.NewFileURI(path))
 
-	expected, err := ioutil.ReadFile(filepath.Join("testdata", "preferences.json"))
+	expected, err := ioutil.ReadFile(filepath.Join("dummy.json"))
 	if err != nil {
 		assert.Fail(t, "Failed to load, %v", err)
 	}
@@ -42,8 +45,9 @@ func TestPreferences_Save(t *testing.T) {
 }
 
 func TestPreferences_Load(t *testing.T) {
-	p := loadPreferences("dummy")
-	p.loadFromFile(filepath.Join("testdata", "preferences.json"))
+	p := loadPreferences()
+	path, _ := filepath.Abs(filepath.Join("testdata", "dummy.json"))
+	p.loadFromFile(storage.NewFileURI(path))
 
 	assert.Equal(t, "value", p.String("keyString"))
 	assert.Equal(t, 4, p.Int("keyInt"))
