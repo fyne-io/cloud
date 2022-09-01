@@ -25,6 +25,9 @@ func (d *dropbox) SetConfig(str string) {
 	d.config = str
 }
 
+func (d *dropbox) Cleanup(a fyne.App) {
+}
+
 func (d *dropbox) Configure(a fyne.App, w fyne.Window) (data string, err error) {
 	if fyne.CurrentDevice().IsMobile() {
 		data, err = d.mobileConfig(a)
