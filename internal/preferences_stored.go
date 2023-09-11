@@ -138,6 +138,7 @@ func NewPreferences(a fyne.App, file fyne.URI) *preferences {
 	if a.UniqueID() == "" {
 		return p
 	}
+	p.load()
 
 	p.needsSaveBeforeExit = true
 	p.AddChangeListener(func() {
