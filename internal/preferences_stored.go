@@ -3,6 +3,7 @@ package internal
 
 import (
 	"encoding/json"
+	"os"
 	"sync"
 	"time"
 
@@ -13,11 +14,15 @@ import (
 type preferences struct {
 	*InMemoryPreferences
 
-	prefLock                   sync.RWMutex
-	disconnected, ignoreChange bool
+	prefLock            sync.RWMutex
+	disconnected        bool
+	loadingInProgress   bool
+	savedRecently       bool
+	changedDuringSaving bool
 
-	app  fyne.App
-	file fyne.URI
+	app                 fyne.App
+	needsSaveBeforeExit bool
+	file                fyne.URI
 }
 
 // Declare conformity with Preferences interface
@@ -29,12 +34,30 @@ func (p *preferences) Disconnect() {
 	p.prefLock.Unlock()
 }
 
-func (p *preferences) resetIgnore() {
+// forceImmediateSave writes preferences to file immediately, ignoring the debouncing
+// logic in the change listener. Does nothing if preferences are not backed with a file.
+func (p *preferences) forceImmediateSave() {
+	if !p.needsSaveBeforeExit {
+		return
+	}
+	err := p.save()
+	if err != nil {
+		fyne.LogError("Failed on force saving preferences", err)
+	}
+}
+
+func (p *preferences) resetSavedRecently() {
 	go func() {
 		time.Sleep(time.Millisecond * 100) // writes are not always atomic. 10ms worked, 100 is safer.
 		p.prefLock.Lock()
-		p.ignoreChange = false
+		p.savedRecently = false
+		changedDuringSaving := p.changedDuringSaving
+		p.changedDuringSaving = false
 		p.prefLock.Unlock()
+
+		if changedDuringSaving {
+			p.save()
+		}
 	}()
 }
 
@@ -44,9 +67,9 @@ func (p *preferences) save() error {
 
 func (p *preferences) saveToFile(file fyne.URI) error {
 	p.prefLock.Lock()
-	p.ignoreChange = true
+	p.savedRecently = true
 	p.prefLock.Unlock()
-	defer p.resetIgnore()
+	defer p.resetSavedRecently()
 	dir, _ := storage.Parent(file)
 	if dir != nil { // may not be supported / needed if the file exists
 		_ = storage.CreateListable(dir)
@@ -54,6 +77,9 @@ func (p *preferences) saveToFile(file fyne.URI) error {
 
 	write, err := storage.Writer(file)
 	if err != nil {
+		if !os.IsExist(err) {
+			return err
+		}
 		return err
 	}
 	encode := json.NewEncoder(write)
@@ -85,9 +111,21 @@ func (p *preferences) loadFromFile(path fyne.URI) (err error) {
 	}()
 	decode := json.NewDecoder(read)
 
+	p.prefLock.Lock()
+	p.loadingInProgress = true
+	p.prefLock.Unlock()
+
 	p.InMemoryPreferences.WriteValues(func(values map[string]interface{}) {
 		err = decode.Decode(&values)
+		if err != nil {
+			return
+		}
+		convertLists(values)
 	})
+
+	p.prefLock.Lock()
+	p.loadingInProgress = false
+	p.prefLock.Unlock()
 
 	return err
 }
@@ -100,13 +138,17 @@ func NewPreferences(a fyne.App, file fyne.URI) *preferences {
 	if a.UniqueID() == "" {
 		return p
 	}
-	p.load()
 
+	p.needsSaveBeforeExit = true
 	p.AddChangeListener(func() {
-		p.prefLock.RLock()
-		shouldIgnoreChange := p.ignoreChange || p.disconnected
-		p.prefLock.RUnlock()
-		if shouldIgnoreChange { // callback after loading, no need to save
+		p.prefLock.Lock()
+		shouldIgnoreChange := p.savedRecently || p.loadingInProgress || p.disconnected
+		if p.savedRecently && !p.loadingInProgress {
+			p.changedDuringSaving = true
+		}
+		p.prefLock.Unlock()
+
+		if shouldIgnoreChange { // callback after loading file, or too many updates in a row
 			return
 		}
 
@@ -117,4 +159,41 @@ func NewPreferences(a fyne.App, file fyne.URI) *preferences {
 	})
 	p.watch()
 	return p
+}
+
+func convertLists(values map[string]interface{}) {
+	for k, v := range values {
+		if items, ok := v.([]interface{}); ok {
+			if len(items) == 0 {
+				continue
+			}
+
+			switch items[0].(type) {
+			case bool:
+				bools := make([]bool, len(items))
+				for i, item := range items {
+					bools[i] = item.(bool)
+				}
+				values[k] = bools
+			case float64:
+				floats := make([]float64, len(items))
+				for i, item := range items {
+					floats[i] = item.(float64)
+				}
+				values[k] = floats
+			case int:
+				ints := make([]int, len(items))
+				for i, item := range items {
+					ints[i] = item.(int)
+				}
+				values[k] = ints
+			case string:
+				strings := make([]string, len(items))
+				for i, item := range items {
+					strings[i] = item.(string)
+				}
+				values[k] = strings
+			}
+		}
+	}
 }
